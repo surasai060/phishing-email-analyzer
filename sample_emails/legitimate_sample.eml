@@ -1,0 +1,21 @@
+From: newsletter@github.com
+To: surasai060@gmail.com
+Subject: Your monthly GitHub activity summary
+Date: Sat, 27 Jun 2026 09:00:00 +0000
+Reply-To: noreply@github.com
+Return-Path: <noreply@github.com>
+Received-SPF: pass (github.com designates 192.30.252.1 as permitted sender)
+Authentication-Results: mx.example.com; dkim=pass header.d=github.com
+Content-Type: text/plain; charset="UTF-8"
+
+Hi Sai,
+
+Here's your GitHub activity summary for June 2026.
+
+You made 23 commits this month across 4 repositories.
+Your top repository was siem-log-anomaly-detector with 15 commits.
+
+Keep up the great work!
+
+The GitHub Team
+https://github.com

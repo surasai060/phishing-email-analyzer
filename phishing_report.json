@@ -1,0 +1,87 @@
+{
+  "report_metadata": {
+    "tool": "Phishing Email Analyzer",
+    "generated_at": "2026-07-06 16:42:21",
+    "source_file": "sample_emails/phishing_sample.eml",
+    "threat_score": 100,
+    "severity": "HIGH",
+    "total_indicators": 9
+  },
+  "email_summary": {
+    "from": "security@paypa1-support.xyz",
+    "subject": "URGENT: Your PayPal account has been suspended",
+    "date": "Sat, 27 Jun 2026 02:14:33 +0000",
+    "reply_to": "no-reply@collect-paypal.click"
+  },
+  "verdict": "PHISHING LIKELY \u2014 Threat score 100/100. 9 indicators detected.",
+  "indicators": [
+    {
+      "indicator": "Reply-To Mismatch",
+      "detail": "From domain 'paypa1-support.xyz' differs from Reply-To 'collect-paypal.click'",
+      "weight": 25
+    },
+    {
+      "indicator": "Brand Impersonation (Paypal)",
+      "detail": "Email mentions 'paypal' but sender domain is 'paypa1-support.xyz' (expected 'paypal.com')",
+      "weight": 30
+    },
+    {
+      "indicator": "Suspicious TLD (.xyz)",
+      "detail": "URL uses high-risk TLD: https://secure-paypal-login.xyz/confirm",
+      "weight": 20,
+      "url": "https://secure-paypal-login.xyz/confirm"
+    },
+    {
+      "indicator": "IP-Based URL",
+      "detail": "URL uses raw IP instead of domain: http://185.220.101.47/paypal/verify?token=abc123",
+      "weight": 30,
+      "url": "http://185.220.101.47/paypal/verify?token=abc123"
+    },
+    {
+      "indicator": "URL Shortener Detected",
+      "detail": "Shortened URL hides true destination: https://bit.ly/3xPaypalVerify",
+      "weight": 15,
+      "url": "https://bit.ly/3xPaypalVerify"
+    },
+    {
+      "indicator": "Urgency Language in Subject",
+      "detail": "Subject contains urgency triggers: urgent, suspended",
+      "weight": 15
+    },
+    {
+      "indicator": "Phishing Keywords Detected",
+      "detail": "7 phishing phrases found: \"verify your account\", \"unusual activity\"...",
+      "weight": 20
+    },
+    {
+      "indicator": "SPF Failure",
+      "detail": "SPF check failed: fail (domain of paypa1-support.xyz does not designate 185.220.101.47 as permitted sender)",
+      "weight": 25
+    },
+    {
+      "indicator": "DKIM Failure",
+      "detail": "DKIM signature missing or invalid",
+      "weight": 20
+    }
+  ],
+  "iocs": {
+    "urls": [
+      "https://secure-paypal-login.xyz/confirm",
+      "http://185.220.101.47/paypal/verify?token=abc123",
+      "https://bit.ly/3xPaypalVerify"
+    ],
+    "sending_domain": "paypa1-support.xyz",
+    "reply_to_domain": "collect-paypal.click",
+    "originating_ips": [],
+    "attachments": []
+  },
+  "virustotal_results": {},
+  "recommended_actions": [
+    "Do not click any links in the email",
+    "Do not open attachments",
+    "Block sender domain at email gateway",
+    "Report to security team immediately",
+    "Submit URLs to VirusTotal for full scan",
+    "Alert other users who may have received this email"
+  ]
+}
