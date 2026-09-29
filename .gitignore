@@ -1,0 +1,11 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Generated reports (keep only examples/sample_report.json)
+*.json
+!examples/*.json
+
+# Secrets - never commit API keys
+.env
+*.key
