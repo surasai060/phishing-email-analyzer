@@ -1,0 +1,103 @@
+{
+  "report_metadata": {
+    "tool": "Phishing Email Analyzer",
+    "generated_at": "2026-09-29 19:46:24",
+    "source_file": "sample_emails/phishing_sample.eml",
+    "threat_score": 100,
+    "severity": "HIGH",
+    "total_indicators": 10
+  },
+  "email_summary": {
+    "from": "security@paypa1-support.xyz",
+    "subject": "URGENT: Your PayPal account has been suspended",
+    "date": "Sat, 27 Jun 2026 02:14:33 +0000",
+    "reply_to": "no-reply@collect-paypal.click"
+  },
+  "verdict": "PHISHING LIKELY \u2014 Threat score 100/100. 10 indicators detected.",
+  "indicators": [
+    {
+      "indicator": "Reply-To Mismatch",
+      "detail": "From domain 'paypa1-support.xyz' differs from Reply-To 'collect-paypal.click'",
+      "weight": 25
+    },
+    {
+      "indicator": "Brand Impersonation (Paypal)",
+      "detail": "Sender name/subject claims 'paypal' but sender domain is 'paypa1-support.xyz' (expected 'paypal.com')",
+      "weight": 30
+    },
+    {
+      "indicator": "IP-Based URL",
+      "detail": "URL uses raw IP instead of domain: http://185.220.101.47/paypal/verify?token=abc123",
+      "weight": 30,
+      "url": "http://185.220.101.47/paypal/verify?token=abc123"
+    },
+    {
+      "indicator": "Suspicious TLD (.xyz)",
+      "detail": "URL uses high-risk TLD: https://secure-paypal-login.xyz/confirm",
+      "weight": 20,
+      "url": "https://secure-paypal-login.xyz/confirm"
+    },
+    {
+      "indicator": "Brand Lookalike Domain",
+      "detail": "Domain uses the name 'paypal' but is not paypal.com: secure-paypal-login.xyz",
+      "weight": 35,
+      "url": "https://secure-paypal-login.xyz/confirm"
+    },
+    {
+      "indicator": "URL Shortener Detected",
+      "detail": "Shortened URL hides true destination: https://bit.ly/3xPaypalVerify",
+      "weight": 15,
+      "url": "https://bit.ly/3xPaypalVerify"
+    },
+    {
+      "indicator": "Urgency Language in Subject",
+      "detail": "Subject contains urgency triggers: urgent, suspended",
+      "weight": 15
+    },
+    {
+      "indicator": "Phishing Keywords Detected",
+      "detail": "7 phishing phrases found: \"verify your account\", \"unusual activity\"...",
+      "weight": 20
+    },
+    {
+      "indicator": "SPF Failure",
+      "detail": "SPF check failed: fail (domain of paypa1-support.xyz does not designate 185.220.101.47 as permitted sender)",
+      "weight": 25
+    },
+    {
+      "indicator": "DKIM Failure",
+      "detail": "DKIM signature missing or invalid",
+      "weight": 20
+    }
+  ],
+  "mitre_attack": [
+    "T1566 - Phishing",
+    "T1566.002 - Spearphishing Link"
+  ],
+  "iocs": {
+    "sender_address": "security@paypa1-support.xyz",
+    "sending_domain": "paypa1-support.xyz",
+    "reply_to_domain": "collect-paypal.click",
+    "urls": [
+      "http://185.220.101.47/paypal/verify?token=abc123",
+      "https://secure-paypal-login.xyz/confirm",
+      "https://bit.ly/3xPaypalVerify"
+    ],
+    "url_domains": [
+      "185.220.101.47",
+      "secure-paypal-login.xyz",
+      "bit.ly"
+    ],
+    "originating_ips": [],
+    "attachments": []
+  },
+  "virustotal_results": {},
+  "recommended_actions": [
+    "Do not click any links in the email",
+    "Do not open attachments",
+    "Block sender domain and URLs at email gateway and proxy",
+    "Report to security team immediately",
+    "Search mailboxes for other recipients and purge the email",
+    "Reset credentials of any user who clicked and entered a password"
+  ]
+}
