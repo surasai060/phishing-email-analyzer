@@ -1,123 +1,150 @@
 # 🎣 Phishing Email Analyzer
 
-> A Python tool that automatically analyzes `.eml` email files for phishing indicators — detecting header spoofing, brand impersonation, malicious URLs, and IOCs — with optional **VirusTotal API** integration for real-time URL reputation checks.
+> A Python tool that automatically analyzes `.eml` email files for phishing indicators — header spoofing, SPF/DKIM/DMARC failures, brand impersonation, lookalike domains, malicious URLs and dangerous attachments — and produces a **0–100 threat score**, **extracted IOCs** and a **MITRE ATT&CK mapping**, with optional **VirusTotal API** URL reputation checks.
 
 Built as a SOC analyst portfolio project by **Sai Sura** — Master's student in Intelligent Interactive Systems, Universität Bielefeld.
+
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-red)
+![VirusTotal](https://img.shields.io/badge/API-VirusTotal-lightblue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
 ## 📸 Dashboard Preview
 
-```
-╔══════════════════════════════════════════════════════════╗
-║  🎣  Phishing Email Analyzer                            ║
-║  ─────────────────────────────────────────────────────  ║
-║  Threat Score: 100/100   Severity: 🔴 HIGH              ║
-║  Indicators: 9           URLs Found: 3                  ║
-║  ─────────────────────────────────────────────────────  ║
-║                                                          ║
-║  🔴 PHISHING LIKELY — Threat score 100/100              ║
-║                                                          ║
-║  📧 Email Header Summary                                ║
-║  From:    security@paypa1-support.xyz                   ║
-║  Subject: URGENT: Your PayPal account has been...       ║
-║  Date:    Sat, 27 Jun 2026 02:14:33 +0000               ║
-║                                                          ║
-║  🚨 Phishing Indicators                                 ║
-║  [+30] Brand Impersonation (PayPal)                     ║
-║  [+30] IP-Based URL detected                            ║
-║  [+25] Reply-To Mismatch                                ║
-║  [+25] SPF Authentication Failure                       ║
-║  [+20] Suspicious TLD (.xyz)                            ║
-║  [+20] DKIM Failure                                     ║
-║  [+20] Phishing Keywords (7 found)                      ║
-║  [+15] URL Shortener Detected                           ║
-║  [+15] Urgency Language in Subject                      ║
-║                                                          ║
-║  [ 📥 Download Phishing Report (JSON) ]                 ║
-╚══════════════════════════════════════════════════════════╝
-```
+**Phishing email — 100/100, HIGH, 10 indicators**
+
+![Phishing result](images/dashboard_results.png)
+
+**Every indicator explained with its score**
+
+![Phishing indicators](images/dashboard_indicators.png)
+
+**Legitimate email — 0/100, CLEAN (no false positives)**
+
+![Legitimate result](images/dashboard_legit.png)
 
 ---
 
 ## 🎯 Problem This Solves
 
-Phishing emails are the **#1 initial attack vector** in corporate breaches. A Level 1 SOC analyst spends a significant part of their day manually triaging suspicious emails forwarded by employees — checking headers, inspecting links, looking up domains.
+Phishing is one of the most common initial attack vectors in corporate breaches. A Level 1 SOC analyst spends a large part of the day triaging suspicious emails reported by employees — reading headers, checking links and looking up domains.
 
-This tool **automates that triage**. Drop in a `.eml` file, get back a 0–100 threat score with every indicator explained and all IOCs extracted. What takes an analyst 10–15 minutes manually takes this tool under 3 seconds.
+This tool **automates the first-pass triage**. Load a `.eml` file and get a 0–100 threat score, every indicator explained, all IOCs extracted and the matching MITRE ATT&CK techniques — in a few seconds instead of 10–15 minutes of manual work.
+
+---
+
+## ✨ Key Features
+
+- **Header analysis** — Reply-To and Return-Path mismatch with the From domain
+- **Email authentication checks** — SPF, DKIM and DMARC failures
+- **Brand impersonation** — sender name or subject claims a brand (PayPal, Microsoft, DHL…) but the sender domain does not belong to it
+- **URL analysis** — IP-based URLs, high-risk TLDs, URL shorteners and brand **lookalike domains** (e.g. `secure-paypal-login.xyz`)
+- **Attachment checks** — executable/script files and double extensions (e.g. `invoice.pdf.exe`)
+- **Content signals** — urgency language and known phishing phrases
+- **0–100 threat score** with severity (HIGH / MEDIUM / LOW / CLEAN)
+- **IOC extraction** — sender address, domains, URLs, URL domains, originating IPs, attachment names
+- **MITRE ATT&CK mapping** — T1566 Phishing, T1566.002 Spearphishing Link, T1566.001 Spearphishing Attachment
+- **VirusTotal API v3** URL reputation checks (optional)
+- **JSON report** and **Streamlit dashboard**
 
 ---
 
 ## 🔍 What It Detects
 
-| Check | What It Looks For | Max Score |
-|-------|-------------------|-----------|
-| **Header Spoofing** | Reply-To / Return-Path mismatch with From domain | +45 pts |
-| **Brand Impersonation** | PayPal/Apple/Microsoft mentioned but wrong sender domain | +30 pts |
-| **IP-Based URL** | Links using raw IP addresses instead of domains | +30 pts |
-| **Suspicious TLD** | Domains ending in .xyz, .click, .top, .tk etc. | +20 pts |
-| **URL Shortener** | bit.ly, tinyurl hiding the real destination | +15 pts |
-| **Subdomain Abuse** | paypal.evil-site.xyz pretending to be PayPal | +35 pts |
-| **Urgency Language** | "Urgent", "Act now", "Account suspended" in subject | +15 pts |
-| **Phishing Keywords** | Known phishing phrases in body | +20 pts |
-| **SPF Failure** | Sending server not authorized for that domain | +25 pts |
-| **DKIM Failure** | Email signature missing or invalid | +20 pts |
-| **Dangerous Attachments** | .exe, .bat, .ps1, double-extension files | +40 pts |
-| **VirusTotal (optional)** | URL checked against 70+ AV engines via API | +40 pts |
+| Check | What It Looks For | Points |
+|-------|-------------------|--------|
+| **Reply-To Mismatch** | Reply-To domain differs from From domain | +25 |
+| **Return-Path Mismatch** | Return-Path domain differs from From domain | +20 |
+| **Brand Impersonation** | Sender name/subject claims a brand, but the sender domain is not the brand's domain | +30 |
+| **Brand via Free Email** | Brand claimed but sent from Gmail, Outlook, etc. | +20 |
+| **IP-Based URL** | Links that use a raw IP address instead of a domain | +30 |
+| **Suspicious TLD** | Domains ending in `.xyz`, `.click`, `.top`, `.tk` etc. | +20 |
+| **URL Shortener** | `bit.ly`, `tinyurl.com`, `t.co` … hiding the real destination | +15 |
+| **Brand Lookalike Domain** | Brand name inside a non-brand domain: `paypal.evil-site.xyz`, `secure-paypal-login.xyz` | +35 |
+| **Urgency Language** | "Urgent", "Suspended", "Action required" in the subject | +15 |
+| **Phishing Keywords** | Known phishing phrases in subject or body (2+ phrases) | +20 |
+| **SPF Failure** | Sending server not authorized for the domain | +25 |
+| **DKIM Failure** | Email signature missing or invalid | +20 |
+| **DMARC Failure** | Domain's DMARC policy check failed | +20 |
+| **Dangerous Attachment** | `.exe`, `.js`, `.ps1`, `.vbs`, `.hta`, `.iso` … | +40 |
+| **Double Extension** | Document disguised as executable, e.g. `invoice.pdf.exe` | +35 |
+| **VirusTotal (optional)** | URL flagged by 1–4 engines / by 5+ engines | +20 / +40 |
+
+The total score is **capped at 100**.
 
 ### Threat Score → Severity
+
 | Score | Severity | Meaning |
 |-------|----------|---------|
-| 60–100 | 🔴 HIGH | Block sender, report to security team immediately |
-| 30–59 | 🟠 MEDIUM | Do not click links, verify sender through official channels |
-| 1–29 | 🟡 LOW | Probably fine, double-check if unexpected |
+| 60–100 | 🔴 HIGH | Phishing likely — block, report and search for other recipients |
+| 30–59 | 🟠 MEDIUM | Suspicious — do not click links, verify the sender through official channels |
+| 1–29 | 🟡 LOW | Probably fine — double-check if unexpected |
 | 0 | 🟢 CLEAN | No indicators found |
+
+---
+
+## 🎯 MITRE ATT&CK Mapping
+
+| Condition | Technique |
+|-----------|-----------|
+| Email scored MEDIUM or HIGH | [T1566 – Phishing](https://attack.mitre.org/techniques/T1566/) |
+| Email contains URLs | [T1566.002 – Spearphishing Link](https://attack.mitre.org/techniques/T1566/002/) |
+| Email contains attachments | [T1566.001 – Spearphishing Attachment](https://attack.mitre.org/techniques/T1566/001/) |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-                    ┌─────────────────┐
-                    │   .eml File     │
-                    │  (email file)   │
-                    └────────┬────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │  Email Parser   │  ← Extracts: From, Reply-To,
-                    │  (analyzer.py)  │    Subject, Body, URLs,
-                    └────────┬────────┘    Attachments, Auth headers
-                             │
-        ┌────────────────────┼─────────────────────┐
-        ▼                    ▼                     ▼
-┌──────────────┐    ┌──────────────┐    ┌──────────────────┐
-│   Header     │    │     URL      │    │    Content       │
-│  Spoofing    │    │  Analysis    │    │    Signals       │
-│  Check       │    │  Check       │    │  (keywords +     │
-└──────┬───────┘    └──────┬───────┘    │   urgency)       │
-       │                   │            └──────┬───────────┘
-       │            ┌──────┴───────┐           │
-       │            │  VirusTotal  │           │
-       │            │  API Check   │           │
-       │            └──────┬───────┘           │
-       └────────────────── ┼ ──────────────────┘
-                           ▼
-                  ┌─────────────────┐
-                  │ Threat Score    │  ← 0–100 score
-                  │ Calculator      │    + severity label
-                  └────────┬────────┘
-                           ▼
-                  ┌─────────────────┐
-                  │ Report Generator│  ← JSON with IOCs,
-                  │                 │    indicators, actions
-                  └────────┬────────┘
-                           ▼
-                  ┌─────────────────┐
-                  │   Streamlit     │  ← Web dashboard
-                  │   Dashboard     │
-                  └─────────────────┘
+                         ┌─────────────────┐
+                         │    .eml File    │
+                         └────────┬────────┘
+                                  ▼
+                         ┌─────────────────┐
+                         │  Email Parser   │  ← From, Reply-To, Return-Path,
+                         │  (analyzer.py)  │    Subject, Body, URLs, Received,
+                         └────────┬────────┘    Auth headers, Attachments
+                                  │
+   ┌──────────────┬───────────────┼───────────────┬───────────────┐
+   ▼              ▼               ▼               ▼               ▼
+┌─────────┐ ┌───────────┐ ┌──────────────┐ ┌────────────┐ ┌─────────────┐
+│ Header  │ │   Auth    │ │    Brand     │ │    URL     │ │ Attachment  │
+│Spoofing │ │SPF / DKIM │ │Impersonation │ │  Analysis  │ │  + Content  │
+│ Check   │ │  / DMARC  │ │    Check     │ │   Check    │ │   Signals   │
+└────┬────┘ └─────┬─────┘ └──────┬───────┘ └─────┬──────┘ └──────┬──────┘
+     │            │              │         ┌─────┴──────┐        │
+     │            │              │         │ VirusTotal │        │
+     │            │              │         │  API v3    │        │
+     │            │              │         └─────┬──────┘        │
+     └────────────┴──────────────┴───────┬───────┴───────────────┘
+                                         ▼
+                                ┌─────────────────┐
+                                │ Threat Score    │  ← 0–100 + severity
+                                │ + MITRE mapping │
+                                └────────┬────────┘
+                                         ▼
+                                ┌─────────────────┐
+                                │ Report Generator│  ← JSON: indicators,
+                                │                 │    IOCs, actions
+                                └────────┬────────┘
+                          ┌──────────────┴──────────────┐
+                          ▼                             ▼
+                 ┌─────────────────┐           ┌─────────────────┐
+                 │   CLI Output    │           │    Streamlit    │
+                 │                 │           │    Dashboard    │
+                 └─────────────────┘           └─────────────────┘
 ```
+
+### How it works (step by step)
+
+1. **Parse** — Python's `email` library reads the `.eml` file (RFC-compliant) and extracts headers, body text/HTML and attachments.
+2. **Check** — independent detection functions look for header, authentication, brand, URL, content and attachment indicators. Each indicator has a weight.
+3. **Enrich (optional)** — up to 4 URLs are checked with the VirusTotal API v3.
+4. **Score** — weights are added (maximum 100) and converted to a severity level.
+5. **Map & extract** — the email is mapped to MITRE ATT&CK techniques and all IOCs are collected.
+6. **Report** — results go to a JSON report, the terminal and the Streamlit dashboard.
 
 ---
 
@@ -140,9 +167,9 @@ python generate_sample_emails.py
 ```
 Creates two test files:
 - `sample_emails/phishing_sample.eml` — realistic PayPal phishing email
-- `sample_emails/legitimate_sample.eml` — clean GitHub newsletter
+- `sample_emails/legitimate_sample.eml` — clean GitHub newsletter (should score 0)
 
-### 4a. Run CLI analysis
+### 4a. Run the CLI analysis
 ```bash
 # Without VirusTotal
 python analyzer.py sample_emails/phishing_sample.eml
@@ -164,82 +191,62 @@ Then open **http://localhost:8501** in your browser.
 ```
 [*] Analyzing: sample_emails/phishing_sample.eml
 [*] Running detection checks...
-[*] Checking 3 URLs against VirusTotal...
+[*] Skipping VirusTotal (no API key provided)
+[*] Report saved to: phishing_report.json
 
 =======================================================
   THREAT SCORE : 100/100
   SEVERITY     : HIGH
-  INDICATORS   : 9
+  INDICATORS   : 10
+  MITRE ATT&CK : T1566 - Phishing, T1566.002 - Spearphishing Link
 =======================================================
 
-  VERDICT: PHISHING LIKELY — Threat score 100/100. 9 indicators detected.
-
-  [ 30 pts] Brand Impersonation (Paypal)
-             Email mentions 'paypal' but sender is 'paypa1-support.xyz'
-
-  [ 30 pts] IP-Based URL
-             URL uses raw IP: http://185.220.101.47/paypal/verify?token=abc123
+  VERDICT: PHISHING LIKELY — Threat score 100/100. 10 indicators detected.
 
   [ 25 pts] Reply-To Mismatch
-             From 'paypa1-support.xyz' differs from Reply-To 'collect-paypal.click'
-
-  [ 25 pts] SPF Failure
-             fail (domain does not designate IP as permitted sender)
-
+             From domain 'paypa1-support.xyz' differs from Reply-To 'collect-paypal.click'
+  [ 30 pts] Brand Impersonation (Paypal)
+             Sender name/subject claims 'paypal' but sender domain is 'paypa1-support.xyz' (expected 'paypal.com')
+  [ 30 pts] IP-Based URL
+             URL uses raw IP instead of domain: http://185.220.101.47/paypal/verify?token=abc123
   [ 20 pts] Suspicious TLD (.xyz)
-             https://secure-paypal-login.xyz/confirm
-
+             URL uses high-risk TLD: https://secure-paypal-login.xyz/confirm
+  [ 35 pts] Brand Lookalike Domain
+             Domain uses the name 'paypal' but is not paypal.com: secure-paypal-login.xyz
+  [ 15 pts] URL Shortener Detected
+             Shortened URL hides true destination: https://bit.ly/3xPaypalVerify
+  [ 15 pts] Urgency Language in Subject
+             Subject contains urgency triggers: urgent, suspended
+  [ 20 pts] Phishing Keywords Detected
+             7 phishing phrases found: "verify your account", "unusual activity"...
+  [ 25 pts] SPF Failure
+             SPF check failed: fail (domain of paypa1-support.xyz does not designate 185.220.101.47 as permitted sender)
   [ 20 pts] DKIM Failure
              DKIM signature missing or invalid
-
-  [ 20 pts] Phishing Keywords Detected
-             7 phrases found: "verify your account", "unusual activity"...
-
-  [ 15 pts] URL Shortener Detected
-             https://bit.ly/3xPaypalVerify hides true destination
-
-  [ 15 pts] Urgency Language in Subject
-             Triggers: urgent, suspended
 ```
+
+The legitimate sample (`legitimate_sample.eml`) returns **0/100 — CLEAN**, which shows the checks do not raise false alarms on a normal newsletter.
 
 ---
 
-## 🌐 VirusTotal Integration
-
-Get a **free API key** at [virustotal.com](https://www.virustotal.com) (takes 2 minutes).
-
-The free tier allows 4 lookups/minute and 500/day — enough for testing and demos. The tool automatically limits to 5 URL checks per analysis to stay within the free tier.
-
-**How to use:**
-```bash
-# CLI
-python analyzer.py email.eml YOUR_API_KEY report.json
-
-# Dashboard
-# Paste your key into the sidebar field — it's masked for security
-```
-
-> ⚠️ Never hardcode your API key in the code or push it to GitHub. Always pass it at runtime.
-
----
-
-## 📄 Sample IOC Report (JSON)
+## 📄 Sample Report (JSON, shortened)
 
 ```json
 {
   "report_metadata": {
     "tool": "Phishing Email Analyzer",
-    "generated_at": "2026-06-27 14:32:01",
     "threat_score": 100,
     "severity": "HIGH",
-    "total_indicators": 9
+    "total_indicators": 10
   },
   "email_summary": {
     "from": "security@paypa1-support.xyz",
     "subject": "URGENT: Your PayPal account has been suspended",
     "reply_to": "no-reply@collect-paypal.click"
   },
+  "mitre_attack": ["T1566 - Phishing", "T1566.002 - Spearphishing Link"],
   "iocs": {
+    "sender_address": "security@paypa1-support.xyz",
     "sending_domain": "paypa1-support.xyz",
     "reply_to_domain": "collect-paypal.click",
     "urls": [
@@ -247,10 +254,58 @@ python analyzer.py email.eml YOUR_API_KEY report.json
       "https://secure-paypal-login.xyz/confirm",
       "https://bit.ly/3xPaypalVerify"
     ],
-    "originating_ips": ["185.220.101.47"]
-  }
+    "url_domains": ["185.220.101.47", "secure-paypal-login.xyz", "bit.ly"],
+    "originating_ips": [],
+    "attachments": []
+  },
+  "recommended_actions": [
+    "Do not click any links in the email",
+    "Do not open attachments",
+    "Block sender domain and URLs at email gateway and proxy",
+    "Report to security team immediately",
+    "Search mailboxes for other recipients and purge the email",
+    "Reset credentials of any user who clicked and entered a password"
+  ]
 }
 ```
+
+`originating_ips` is filled from the `Received` and `X-Originating-IP` headers when they exist in the email.
+
+A full example report is in [`examples/sample_report.json`](examples/sample_report.json).
+
+---
+
+## 🌐 VirusTotal Integration
+
+Get a **free API key** at [virustotal.com](https://www.virustotal.com).
+
+- Uses the **VirusTotal API v3** URL endpoint. The URL identifier is the **base64url-encoded URL without padding**, as required by the API.
+- The free tier allows **4 requests per minute**, so the tool checks **up to 4 URLs** per email.
+- Results are handled clearly:
+  - `malicious / suspicious / harmless / undetected` counts when VirusTotal knows the URL
+  - `not_in_virustotal` when the URL has never been scanned (HTTP 404)
+  - `rate_limited` when the free-tier limit is reached (HTTP 429)
+  - `invalid_api_key` (HTTP 401)
+
+```bash
+# CLI
+python analyzer.py email.eml YOUR_API_KEY report.json
+
+# Dashboard: paste your key into the sidebar field (masked)
+```
+
+> ⚠️ Never hardcode your API key in the code or push it to GitHub. Pass it at runtime. `.env` files are excluded by `.gitignore`.
+
+---
+
+## 🕵️ How a SOC Analyst Would Use the Results
+
+1. **Triage** — use the score and indicators to decide: phishing, spam or legitimate.
+2. **Scope** — search the mail gateway for other recipients of the same sender, subject or URL (message trace).
+3. **Check clicks** — search proxy/DNS logs for the extracted URL domains to see who clicked.
+4. **Check credential use** — if a user entered a password, look for sign-ins from new IPs or countries.
+5. **Contain** — purge the email, block the sender domain and URLs, reset affected passwords.
+6. **Document** — attach the JSON report with IOCs and MITRE techniques to the incident ticket.
 
 ---
 
@@ -260,22 +315,27 @@ python analyzer.py email.eml YOUR_API_KEY report.json
 phishing-email-analyzer/
 │
 ├── analyzer.py                 # Core detection engine
-│   ├── Email Parser            #   Parses .eml headers + body
+│   ├── Email Parser            #   Headers, body, attachments
 │   ├── Header Spoofing Check   #   Reply-To / Return-Path mismatch
-│   ├── Brand Impersonation     #   PayPal, Apple, Microsoft etc.
-│   ├── URL Analysis            #   IP URLs, bad TLDs, shorteners
+│   ├── Auth Check              #   SPF / DKIM / DMARC results
+│   ├── Brand Impersonation     #   Claimed brand vs sender domain
+│   ├── URL Analysis            #   IP URLs, TLDs, shorteners, lookalikes
 │   ├── Content Signals         #   Keywords + urgency language
-│   ├── SPF / DKIM Check        #   Email authentication results
-│   ├── Attachment Check        #   Dangerous file extensions
-│   ├── VirusTotal Integration  #   Live URL reputation API
-│   └── Report Generator        #   JSON IOC report
+│   ├── Attachment Check        #   Dangerous + double extensions
+│   ├── VirusTotal Integration  #   URL reputation (API v3)
+│   ├── MITRE Mapping           #   T1566 techniques
+│   └── Report Generator        #   JSON report with IOCs
 │
 ├── dashboard.py                # Streamlit web dashboard
-├── generate_sample_emails.py   # Sample .eml file generator
-├── requirements.txt            # streamlit
+├── generate_sample_emails.py   # Sample .eml generator
+├── requirements.txt            # Python dependencies
+├── .gitignore                  # Excludes cache, reports and secrets
+├── examples/
+│   └── sample_report.json      # Example output report
+├── images/                     # Dashboard screenshots
 └── sample_emails/
-    ├── phishing_sample.eml     # Realistic phishing test email
-    └── legitimate_sample.eml  # Clean comparison email
+    ├── phishing_sample.eml     # Phishing test email
+    └── legitimate_sample.eml   # Clean comparison email
 ```
 
 ---
@@ -284,32 +344,56 @@ phishing-email-analyzer/
 
 | This Project | Real SOC Task |
 |---|---|
-| Header spoofing check | Manual header analysis in email client |
-| Brand impersonation detection | "Does this look like it's pretending to be PayPal?" |
-| URL extraction + TLD check | Copy link → paste into URLScan.io |
+| Header spoofing check | Manual header analysis in the email client or message trace |
+| SPF / DKIM / DMARC check | Reading the `Authentication-Results` header |
+| Brand impersonation + lookalike domains | "Is this really PayPal, or pretending to be?" |
+| URL extraction + TLD/shortener check | Copying links into URLScan.io |
 | VirusTotal API lookup | Manually submitting URLs to VirusTotal |
-| SPF/DKIM check | Checking email authentication headers |
-| JSON IOC report | Writing up indicators for the SIEM ticket |
+| MITRE ATT&CK mapping | Classifying the incident for reporting |
+| JSON IOC report | Writing up indicators for the incident ticket and blocklists |
+
+---
+
+## ⚠️ Limitations
+
+This is a learning and portfolio project, not a production email security gateway:
+
+- Rule-based with **fixed weights**; real products combine rules with machine learning and reputation data.
+- Tested with **generated sample emails**; real-world emails can be more complex (HTML obfuscation, encoded links).
+- Does not **open or sandbox** attachments — it only checks file names.
+- Brand detection uses a **small fixed brand list**.
+- Lookalike detection finds brand names inside domains, but not character tricks like `paypa1` in URLs (the sender domain is still caught by brand impersonation).
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Detect typosquatting with edit distance (e.g. `paypa1.com` vs `paypal.com`)
+- [ ] Decode HTML links (`href` text vs real destination mismatch)
+- [ ] Hash attachments (SHA-256) and check hashes on VirusTotal
+- [ ] Add AbuseIPDB reputation for originating IPs
+- [ ] Batch analysis of a folder of `.eml` files
+- [ ] Unit tests for every detection check
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Python 3.x** — email parsing, detection logic, IOC extraction
+- **Python `email` library** — RFC-compliant `.eml` parsing
+- **VirusTotal API v3** — URL reputation (optional, free tier)
+- **JSON** — structured report output
 - **Streamlit** — interactive web dashboard
-- **VirusTotal API** — URL/domain reputation (optional, free tier)
-- **JSON** — structured incident report output
-- **Python `email` library** — RFC-compliant .eml parsing
 
 ---
 
 ## 👤 Author
 
 **Sai Sura**  
-Master's in Intelligent Interactive Systems — Universität Bielefeld  
-1 year SOC experience — Tech Mahindra (IBM QRadar, HP ArcSight)  
+Master's student in Intelligent Interactive Systems — Universität Bielefeld  
+Background in SOC operations: alert triage, phishing analysis and incident response  
 📧 surasai060@gmail.com  
-🔗 [LinkedIn](https://linkedin.com/in/sai-sura-945032284)
+🔗 [LinkedIn](https://linkedin.com/in/sai-sura-945032284) · [GitHub](https://github.com/surasai060)
 
 ---
 
